@@ -31,11 +31,30 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
 
     return yoko ,tate
 
+def init_bb_imgs() -> tuple[list[pg.Surface], list[int]]:
+    """
+    時間と共に大きくなって加速する
+    戻り値はbb_imgは、だんだん大きくなる爆弾のSurface
+    bb_accsは、段々早くなる爆弾の速度int
+    """
+
+    bb_imgs: list[pg.Surface] = []
+    for r in range(1, 11):
+        bb_img = pg.Surface((20*r, 20*r))
+        pg.draw.circle(bb_img, (255, 0, 0), (10*r, 10*r), 10*r)
+        bb_imgs.append(bb_img)
+
+    bb_accs = [a for a in range(1, 11)]
+    return (bb_imgs, bb_accs)
+
+print(init_bb_imgs.__doc__) 
+
+
 def gameover(screen: pg.Surface) -> None:
     """
     GameOverになったときにされる関数
     引数はscreen    
-
+    戻り値はない
     """
     #gaovはゲームオーバーの画面に使う文字
     gaov = pg.Surface((WIDTH, HEIGHT))  #大きさ設定
@@ -59,6 +78,7 @@ def gameover(screen: pg.Surface) -> None:
     gazo_rect=gazo.get_rect()
     gazo_rect.center=(WIDTH/2+250, HEIGHT/2)  #位置の設定
     screen.blit(gazo, gazo_rect)  #Surfaceに転送
+
     pg.display.update()  #更新する
     time.sleep(5)  #5秒表示
 
@@ -73,20 +93,31 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("fig/pg_bg.jpg")    
     kk_img = pg.transform.rotozoom(pg.image.load("fig/3.png"), 0, 0.9)
+    
     kk_rct = kk_img.get_rect()
     kk_rct.center = 300, 200
-    bb_img = pg.Surface((20, 20))
-    pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10)
-    bb_img.set_colorkey((0,0,0))
-    bb_rct = bb_img.get_rect()
-    bb_img.set_colorkey((0, 0, 0))
-    bb_rct.centery=random.randint(0,WIDTH)  #危険物
+    # bb_img = pg.Surface((20, 20))
+    # pg.draw.circle(bb_img, (255, 0, 0), (10, 10), 10)
+    # bb_img.set_colorkey((0,0,0))
+    # bb_rct = bb_img.get_rect()
+    # bb_img.set_colorkey((0, 0, 0))
+
     kk_rct.centery=random.randint(0,HEIGHT)  #こうかとん
     vx,vy=+5,+5
 
     clock = pg.time.Clock()
     tmr = 0
+    
+
+    bb_imgs,bb_accs=init_bb_imgs()
+    # avx = vx*bb_accs[min(tmr//500, 9)] 
+    bb_img = bb_imgs[min(tmr//500, 9)]
+    bb_rct = bb_img.get_rect()
+    bb_rct.centery=random.randint(0,WIDTH)  #危険物
+
     while True:
+        bb_rct.width = bb_img.get_rect().width
+        
         for event in pg.event.get():
             if event.type == pg.QUIT: 
                 return
@@ -98,6 +129,9 @@ def main():
 
         key_lst = pg.key.get_pressed()
         sum_mv = [0, 0]
+
+        
+        bb_img = bb_imgs[min(tmr//500, 9)]
         # if key_lst[pg.K_UP]:
         #     sum_mv[1] -= 5
         # if key_lst[pg.K_DOWN]:
@@ -121,11 +155,15 @@ def main():
             vx*=-1
         if not tate:
             vy*=-1
-        bb_rct.move_ip(vx,vy)
+        avx = vx*bb_accs[min(tmr//500, 9)] 
+        avy = vy*bb_accs[min(tmr//500, 9)] 
+        bb_rct.move_ip(avx,avy)
         screen.blit(bb_img, bb_rct)
+
         pg.display.update()
         tmr += 1
         clock.tick(50)
+
 
 
 if __name__ == "__main__":
