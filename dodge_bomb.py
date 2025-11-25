@@ -2,6 +2,9 @@ import os
 import random
 import sys
 import pygame as pg
+import time
+
+
 
 
 WIDTH, HEIGHT = 1100, 650
@@ -14,10 +17,11 @@ DELTA = {
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
-    
-# 引数：こうかとんRectかばくだんRect
-# 戻り値：タプル（横方向判定結果，縦方向判定結果）
-# 画面内ならTrue，画面外ならFalse
+    """   
+    引数：こうかとんRectかばくだんRect
+    戻り値：タプル（横方向判定結果，縦方向判定結果）
+    画面内ならTrue，画面外ならFalse
+    """
 
     yoko,tate=True,True
     if obj_rct.left<0 or WIDTH <obj_rct.right:  #横方向のはみだしチェック
@@ -26,6 +30,42 @@ def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
         tate=False
 
     return yoko ,tate
+
+def gameover(screen: pg.Surface) -> None:
+    """
+    GameOverになったときにされる関数
+    引数はscreen    
+
+    """
+    #gaovはゲームオーバーの画面に使う文字
+    gaov = pg.Surface((WIDTH, HEIGHT))  #大きさ設定
+    pg.draw.rect(gaov, (10, 10, 10), pg.Rect(0, 0, WIDTH, HEIGHT))  #四角の大きさ設定
+    # gaov.set_colorkey((0, 0, 0))  #透過させる
+
+    gaov.set_alpha(127.5) #透過設定
+    screen.blit(gaov, (0, 0))
+    
+    fonto = pg.font.Font(None, 80)  #フォント80に設定する
+    txt = fonto.render("Game Over",True, (255,255,255))  #白文字でGame Over
+    txt_rect = txt.get_rect()
+    txt_rect.center = (WIDTH/2, HEIGHT/2)
+    screen.blit(txt, txt_rect)  #Surfaceに転送
+
+    gazo = pg.image.load("fig/8.png")  #こうかとんの画像をロードする
+    gazo_rect=gazo.get_rect()
+    gazo_rect.center=(WIDTH/2-250, HEIGHT/2)  #位置の設定
+    screen.blit(gazo, gazo_rect)  #Surfaceに転送
+
+    gazo_rect=gazo.get_rect()
+    gazo_rect.center=(WIDTH/2+250, HEIGHT/2)  #位置の設定
+    screen.blit(gazo, gazo_rect)  #Surfaceに転送
+    pg.display.update()  #更新する
+    time.sleep(5)  #5秒表示
+
+print(gameover.__doc__) 
+
+
+
 
 
 def main():
@@ -41,7 +81,7 @@ def main():
     bb_rct = bb_img.get_rect()
     bb_img.set_colorkey((0, 0, 0))
     bb_rct.centery=random.randint(0,WIDTH)  #危険物
-    kk_rct.centery=random.randint(0,HEIGHT)  #鳥
+    kk_rct.centery=random.randint(0,HEIGHT)  #こうかとん
     vx,vy=+5,+5
 
     clock = pg.time.Clock()
@@ -52,6 +92,7 @@ def main():
                 return
         if kk_rct.colliderect(bb_rct):
             print("ゲームオーバー")
+            gameover(screen)
             return
         screen.blit(bg_img, [0, 0]) 
 
